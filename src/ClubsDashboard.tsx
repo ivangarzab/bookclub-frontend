@@ -1,48 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
-
-// Types based on your Edge Functions
-interface Club {
-  id: string
-  name: string
-  discord_channel: string
-  server_id: string
-  members: Array<{
-    id: number
-    name: string
-    points: number
-    books_read: number
-    clubs: string[]
-  }>
-  active_session: {
-    id: string
-    book: {
-      title: string
-      author: string
-      edition?: string
-      year?: number
-      isbn?: string
-    }
-    due_date: string
-    discussions: Array<{
-      id: string
-      title: string
-      date: string
-      location?: string
-    }>
-  } | null
-  past_sessions: Array<{
-    id: string
-    due_date: string
-  }>
-  shame_list: number[]
-}
-
-interface Server {
-  id: string
-  name: string
-  clubs: Club[]
-}
+import type { Club, Server } from './types'
 
 export default function ClubsDashboard() {
   const [servers, setServers] = useState<Server[]>([])
