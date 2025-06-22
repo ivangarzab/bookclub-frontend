@@ -49,12 +49,11 @@ export default function ClubsDashboard() {
       
       // Build URL with query parameters since Edge Function expects GET with query params
       const functionName = `club?id=${encodeURIComponent(clubId)}&server_id=${encodeURIComponent(selectedServer)}`
-    
       
       const { data, error } = await supabase.functions.invoke(functionName, {
         method: 'GET'
       })
-  
+
       if (error) throw error
       
       setSelectedClub(data)
@@ -72,22 +71,32 @@ export default function ClubsDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your book clubs...</p>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-purple-200 border-t-transparent mx-auto"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-purple-400 border-r-transparent animate-spin-slow"></div>
+          </div>
+          <p className="mt-6 text-white/80 text-lg font-medium">Loading your book clubs...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-blue-500">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white/10 backdrop-blur-md border-b border-white/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <h1 className="text-2xl font-bold text-gray-900">Book Club Admin</h1>
+            <div className="flex items-center space-x-3">
+              <div className="h-8 w-8 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">📚</span>
+              </div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-200 to-pink-200 bg-clip-text text-transparent">
+                Book Club Admin
+              </h1>
+            </div>
             
             {/* Server Selector */}
             {servers.length > 0 && (
@@ -97,10 +106,10 @@ export default function ClubsDashboard() {
                   setSelectedServer(e.target.value)
                   setSelectedClub(null)
                 }}
-                className="border border-gray-300 rounded-md px-3 py-2 bg-white"
+                className="bg-white/10 backdrop-blur-md border border-white/30 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent"
               >
                 {servers.map(server => (
-                  <option key={server.id} value={server.id}>
+                  <option key={server.id} value={server.id} className="bg-slate-800 text-white">
                     {server.name}
                   </option>
                 ))}
@@ -112,30 +121,30 @@ export default function ClubsDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
+          <div className="mb-6 bg-red-500/20 backdrop-blur-sm border border-red-500/30 rounded-lg p-4">
+            <p className="text-red-100">{error}</p>
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Clubs List */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Clubs Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
+            <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+              <div className="p-6 border-b border-white/20">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-lg font-semibold text-gray-900">Clubs</h2>
+                  <h2 className="text-lg font-semibold text-white">Clubs</h2>
                   <button 
                     onClick={() => alert('TODO: Add new club functionality')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm hover:bg-blue-700"
+                    className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg"
                   >
-                    Add Club
+                    + Add
                   </button>
                 </div>
               </div>
               
-              <div className="divide-y divide-gray-200">
+              <div className="max-h-96 overflow-y-auto">
                 {selectedServerData?.clubs.length === 0 ? (
-                  <div className="p-6 text-center text-gray-500">
+                  <div className="p-6 text-center text-white/60">
                     No clubs found for this server.
                   </div>
                 ) : (
@@ -143,15 +152,18 @@ export default function ClubsDashboard() {
                     <div 
                       key={club.id}
                       onClick={() => fetchClubDetails(club.id)}
-                      className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                        selectedClub?.id === club.id ? 'bg-blue-50 border-r-2 border-blue-500' : ''
+                      className={`p-4 cursor-pointer transition-all duration-200 hover:bg-white/10 border-b border-white/10 last:border-b-0 ${
+                        selectedClub?.id === club.id ? 'bg-purple-500/20 border-r-4 border-purple-400' : ''
                       }`}
                     >
-                      <h3 className="font-medium text-gray-900">{club.name}</h3>
+                      <h3 className="font-medium text-white">{club.name}</h3>
                       {club.discord_channel && (
-                        <p className="text-sm text-gray-500">#{club.discord_channel}</p>
+                        <p className="text-sm text-purple-200">#{club.discord_channel}</p>
                       )}
-                      <p className="text-sm text-gray-400">{club.members?.length || 0} members</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <p className="text-sm text-white/60">{club.members?.length || 0} members</p>
+                        <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse"></div>
+                      </div>
                     </div>
                   ))
                 )}
@@ -159,86 +171,152 @@ export default function ClubsDashboard() {
             </div>
           </div>
 
-          {/* Club Details */}
-          <div className="lg:col-span-2">
+          {/* Main Content */}
+          <div className="lg:col-span-3">
             {selectedClub ? (
-              <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{selectedClub.name}</h2>
-                  {selectedClub.discord_channel && (
-                    <p className="text-gray-600">Discord: #{selectedClub.discord_channel}</p>
-                  )}
+              <div className="space-y-6">
+                {/* Club Header */}
+                <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-bold text-white">{selectedClub.name}</h2>
+                      {selectedClub.discord_channel && (
+                        <p className="text-purple-200 mt-1">Discord: #{selectedClub.discord_channel}</p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/60 text-sm">Server ID</p>
+                      <p className="text-white font-mono text-sm">{selectedClub.server_id}</p>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="p-6 space-y-6">
-                  {/* Active Session */}
-                  {selectedClub.active_session ? (
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Current Reading</h3>
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <h4 className="font-medium text-green-900">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  {/* Current Reading */}
+                  <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+                    <h3 className="font-semibold text-white mb-4 flex items-center">
+                      <span className="mr-2">📖</span>
+                      Current Reading
+                    </h3>
+                    {selectedClub.active_session ? (
+                      <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-4">
+                        <h4 className="font-medium text-green-100 text-lg">
                           {selectedClub.active_session.book.title}
                         </h4>
-                        <p className="text-green-700">by {selectedClub.active_session.book.author}</p>
+                        <p className="text-green-200">by {selectedClub.active_session.book.author}</p>
+                        {selectedClub.active_session.book.edition && (
+                          <p className="text-green-200/80 text-sm">Edition: {selectedClub.active_session.book.edition}</p>
+                        )}
                         {selectedClub.active_session.due_date && (
-                          <p className="text-sm text-green-600 mt-2">
-                            Due: {new Date(selectedClub.active_session.due_date).toLocaleDateString()}
-                          </p>
+                          <div className="mt-3 flex items-center text-sm">
+                            <span className="mr-2">⏰</span>
+                            <span className="text-green-200">
+                              Due: {new Date(selectedClub.active_session.due_date).toLocaleDateString()}
+                            </span>
+                          </div>
                         )}
                       </div>
-                    </div>
-                  ) : (
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Current Reading</h3>
-                      <p className="text-gray-500 italic">No active session</p>
-                    </div>
-                  )}
-
-                  {/* Members */}
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3">
-                      Members ({selectedClub.members.length})
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {selectedClub.members.map(member => (
-                        <div key={member.id} className="border border-gray-200 rounded-lg p-3">
-                          <h4 className="font-medium text-gray-900">{member.name}</h4>
-                          <div className="text-sm text-gray-600 space-y-1">
-                            <p>Points: {member.points}</p>
-                            <p>Books Read: {member.books_read}</p>
-                          </div>
-                          {selectedClub.shame_list.includes(member.id) && (
-                            <span className="inline-block mt-2 px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
-                              Shame List
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-white/60 italic">No active reading session</p>
+                        <button className="mt-2 text-purple-300 hover:text-purple-200 text-sm">
+                          + Start a new session
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Discussions */}
                   {selectedClub.active_session?.discussions && selectedClub.active_session.discussions.length > 0 && (
-                    <div>
-                      <h3 className="font-semibold text-gray-900 mb-3">Upcoming Discussions</h3>
-                      <div className="space-y-2">
+                    <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-6">
+                      <h3 className="font-semibold text-white mb-4 flex items-center">
+                        <span className="mr-2">💬</span>
+                        Upcoming Discussions
+                      </h3>
+                      <div className="space-y-3">
                         {selectedClub.active_session.discussions.map(discussion => (
-                          <div key={discussion.id} className="border border-gray-200 rounded-lg p-3">
-                            <h4 className="font-medium text-gray-900">{discussion.title}</h4>
-                            <p className="text-sm text-gray-600">
-                              {new Date(discussion.date).toLocaleDateString()}
-                              {discussion.location && ` • ${discussion.location}`}
-                            </p>
+                          <div key={discussion.id} className="bg-white/5 border border-white/10 rounded-lg p-3">
+                            <h4 className="font-medium text-white">{discussion.title}</h4>
+                            <div className="flex items-center mt-2 text-sm text-white/70">
+                              <span className="mr-4">📅 {new Date(discussion.date).toLocaleDateString()}</span>
+                              {discussion.location && (
+                                <span>📍 {discussion.location}</span>
+                              )}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Members Table */}
+                <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 overflow-hidden">
+                  <div className="p-6 border-b border-white/20">
+                    <h3 className="font-semibold text-white flex items-center">
+                      <span className="mr-2">👥</span>
+                      Members ({selectedClub.members.length})
+                    </h3>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-white/20">
+                          <th className="text-left py-3 px-6 text-white/80 font-medium">Name</th>
+                          <th className="text-left py-3 px-6 text-white/80 font-medium">Points</th>
+                          <th className="text-left py-3 px-6 text-white/80 font-medium">Books Read</th>
+                          <th className="text-left py-3 px-6 text-white/80 font-medium">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedClub.members.map(member => (
+                          <tr key={member.id} className="border-b border-white/10 hover:bg-white/5 transition-colors">
+                            <td className="py-4 px-6">
+                              <div className="flex items-center">
+                                <div className="h-8 w-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center mr-3">
+                                  <span className="text-white text-sm font-medium">
+                                    {member.name.charAt(0).toUpperCase()}
+                                  </span>
+                                </div>
+                                <span className="text-white font-medium">{member.name}</span>
+                              </div>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="bg-purple-500/20 text-purple-200 px-2 py-1 rounded-full text-sm font-medium">
+                                {member.points}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className="text-white/80">{member.books_read}</span>
+                            </td>
+                            <td className="py-4 px-6">
+                              {selectedClub.shame_list.includes(member.id) ? (
+                                <span className="bg-red-500/20 text-red-200 px-2 py-1 rounded-full text-xs font-medium">
+                                  😱 Shame List
+                                </span>
+                              ) : (
+                                <span className="bg-green-500/20 text-green-200 px-2 py-1 rounded-full text-xs font-medium">
+                                  ✅ Good Standing
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-8 text-center">
-                <p className="text-gray-500">Select a club to view details</p>
+              <div className="bg-white/10 backdrop-blur-md rounded-xl border border-white/20 p-12 text-center">
+                <div className="max-w-md mx-auto">
+                  <div className="h-16 w-16 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">📚</span>
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-2">Select a Club</h3>
+                  <p className="text-white/60">Choose a club from the sidebar to view its details, members, and current reading session.</p>
+                </div>
               </div>
             )}
           </div>
