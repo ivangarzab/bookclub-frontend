@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import type { Club, Server } from './types'
 import AddClubModal from './components/modals/AddClubModal'
+import EditBookModal from './components/modals/EditBookModal'
 import ClubsSidebar from './components/ClubsSidebar'
 
 export default function ClubsDashboard() {
@@ -13,6 +14,9 @@ export default function ClubsDashboard() {
   
   // Add Club Modal State
   const [showAddClubModal, setShowAddClubModal] = useState(false)
+  
+  // Edit Book Modal State
+  const [showEditBookModal, setShowEditBookModal] = useState(false)
   
   // Delete Club Modal State
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
@@ -232,7 +236,10 @@ export default function ClubsDashboard() {
                           
                           {/* Action Buttons Area - Top Right */}
                           <div className="hidden md:flex space-x-3">
-                            <button className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-blue-400/30">
+                            <button 
+                              onClick={() => setShowEditBookModal(true)}
+                              className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-blue-400/30"
+                            >
                               Edit Book
                             </button>
                             <button className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-orange-400/30">
@@ -440,6 +447,19 @@ export default function ClubsDashboard() {
           }}
           onError={setError}
         />
+
+        {/* Edit Book Modal */}
+        {selectedClub && (
+          <EditBookModal
+            isOpen={showEditBookModal}
+            onClose={() => setShowEditBookModal(false)}
+            selectedClub={selectedClub}
+            onBookUpdated={async () => {
+              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated book
+            }}
+            onError={setError}
+          />
+        )}
 
         {/* Delete Confirmation Modal */}
         {showDeleteConfirmModal && clubToDelete && (
