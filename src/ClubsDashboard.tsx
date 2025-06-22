@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from './supabase'
 import type { Club, Server } from './types'
+import AddClubModal from './components/modals/AddClubModal'
 
 export default function ClubsDashboard() {
   const [servers, setServers] = useState<Server[]>([])
@@ -8,6 +9,8 @@ export default function ClubsDashboard() {
   const [selectedClub, setSelectedClub] = useState<Club | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  const [showAddClubModal, setShowAddClubModal] = useState(false)
 
   // Fetch servers on component mount
   useEffect(() => {
@@ -147,7 +150,7 @@ export default function ClubsDashboard() {
                     <p className="text-blue-200/70 text-sm">{selectedServerData?.clubs.length || 0} active clubs</p>
                   </div>
                   <button 
-                    onClick={() => alert('TODO: Add new club functionality')}
+                    onClick={() => setShowAddClubModal(true)}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 shadow-md"
                   >
                     + Add Club
@@ -425,6 +428,18 @@ export default function ClubsDashboard() {
           </div>
         </div>
       </div>
+
+      <AddClubModal
+        isOpen={showAddClubModal}
+        onClose={() => setShowAddClubModal(false)}
+        selectedServer={selectedServer}
+        selectedServerData={selectedServerData}
+        onClubCreated={async (clubId) => {
+          await fetchServers() // Refresh the server list
+          await fetchClubDetails(clubId) // Auto-select the new club
+        }}
+        onError={setError}
+      />
     </div>
   )
 }
