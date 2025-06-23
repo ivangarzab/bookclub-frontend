@@ -246,7 +246,10 @@ export default function ClubsDashboard() {
                             >
                               Edit Book
                             </button>
-                            <button className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-orange-400/30">
+                            <button 
+                              onClick={() => setShowNewSessionModal(true)}
+                              className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-orange-400/30"
+                            >
                               New Session
                             </button>
                           </div>
