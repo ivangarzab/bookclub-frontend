@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 import type { Club, Server } from './types'
 import AddClubModal from './components/modals/AddClubModal'
 import EditBookModal from './components/modals/EditBookModal'
+import NewSessionModal from './components/modals/NewSessionModal'
 import ClubsSidebar from './components/ClubsSidebar'
 
 export default function ClubsDashboard() {
@@ -17,6 +18,9 @@ export default function ClubsDashboard() {
   
   // Edit Book Modal State
   const [showEditBookModal, setShowEditBookModal] = useState(false)
+  
+  // New Session Modal State
+  const [showNewSessionModal, setShowNewSessionModal] = useState(false)
   
   // Delete Club Modal State
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
@@ -300,7 +304,9 @@ export default function ClubsDashboard() {
                       </div>
                       <h3 className="text-2xl font-bold text-white mb-3">No Active Reading</h3>
                       <p className="text-white/60 mb-6">This club doesn't have an active reading session. Start one to get the conversation going!</p>
-                      <button className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-lg">
+                      <button className="bg-gradient-to-r from-orange-500 to-blue-500 hover:from-orange-600 hover:to-blue-600 text-white px-6 py-3 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-lg"
+                        onClick={() => setShowNewSessionModal(true)}
+                      >
                         + Start New Session
                       </button>
                     </div>
@@ -456,6 +462,19 @@ export default function ClubsDashboard() {
             selectedClub={selectedClub}
             onBookUpdated={async () => {
               await fetchClubDetails(selectedClub.id) // Refresh club details to show updated book
+            }}
+            onError={setError}
+          />
+        )}
+
+        {/* New Session Modal */}
+        {selectedClub && (
+          <NewSessionModal
+            isOpen={showNewSessionModal}
+            onClose={() => setShowNewSessionModal(false)}
+            selectedClub={selectedClub}
+            onSessionCreated={async () => {
+              await fetchClubDetails(selectedClub.id) // Refresh club details to show new session
             }}
             onError={setError}
           />
