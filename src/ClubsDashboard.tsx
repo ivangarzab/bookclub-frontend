@@ -293,21 +293,6 @@ export default function ClubsDashboard() {
           <div className="lg:col-span-3">
             {selectedClub ? (
               <div className="space-y-6">
-                {/* Hero Current Reading Card */}
-                <CurrentReadingCard
-                  selectedClub={selectedClub}
-                  onEditBook={() => setShowEditBookModal(true)}
-                  onNewSession={() => setShowNewSessionModal(true)}
-                />
-
-                {/* Discussions Timeline */}
-                <DiscussionsTimeline
-                  selectedClub={selectedClub}
-                  onAddDiscussion={handleAddDiscussion}
-                  onEditDiscussion={handleEditDiscussion}
-                  onDeleteDiscussion={handleDeleteDiscussion}
-                />
-
                 {/* Club Info & Stats */}
                 <div className="bg-white/8 backdrop-blur-md rounded-2xl border border-blue-300/20 p-6 shadow-xl">
                   <div className="flex items-center justify-between">
@@ -323,8 +308,21 @@ export default function ClubsDashboard() {
                     </div>
                   </div>
                 </div>
+                
+                {/* Hero Current Reading Card */}
+                <CurrentReadingCard
+                  selectedClub={selectedClub}
+                  onEditBook={() => setShowEditBookModal(true)}
+                  onNewSession={() => setShowNewSessionModal(true)}
+                />
 
-
+                {/* Discussions Timeline */}
+                <DiscussionsTimeline
+                  selectedClub={selectedClub}
+                  onAddDiscussion={handleAddDiscussion}
+                  onEditDiscussion={handleEditDiscussion}
+                  onDeleteDiscussion={handleDeleteDiscussion}
+                />
 
                 {/* Material Design Members Table */}
                 <MembersTable selectedClub={selectedClub} />
