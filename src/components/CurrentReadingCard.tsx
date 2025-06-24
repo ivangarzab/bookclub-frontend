@@ -32,6 +32,18 @@ export default function CurrentReadingCard({
     )
   }
 
+  // Helper function to get next upcoming discussion
+  const getNextDiscussion = () => {
+    const now = new Date()
+    const upcomingDiscussions = selectedClub.active_session!.discussions
+      .filter(discussion => new Date(discussion.date) > now)
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    
+    return upcomingDiscussions[0] || null
+  }
+
+  const nextDiscussion = getNextDiscussion()
+
   // Active session state
   return (
     <div className="bg-gradient-to-r from-orange-500/20 to-blue-500/20 backdrop-blur-md rounded-2xl border border-orange-300/30 p-8 shadow-2xl">
@@ -83,17 +95,41 @@ export default function CurrentReadingCard({
                   </p>
                 )}
                 
-                {selectedClub.active_session.due_date && (
-                  <div className="flex items-center bg-orange-500/20 rounded-lg px-4 py-3 border border-orange-400/30">
-                    <span className="text-2xl mr-3">⏰</span>
-                    <div>
-                      <p className="text-white font-bold">Due Date</p>
-                      <p className="text-orange-200 text-lg font-semibold">
-                        {new Date(selectedClub.active_session.due_date).toLocaleDateString()}
-                      </p>
+                {/* Due Date and Next Discussion Section */}
+                <div className="space-y-3">
+                  {selectedClub.active_session.due_date && (
+                    <div className="flex items-center bg-orange-500/20 rounded-lg px-4 py-3 border border-orange-400/30">
+                      <span className="text-2xl mr-3">⏰</span>
+                      <div>
+                        <p className="text-white font-bold">Due Date</p>
+                        <p className="text-orange-200 text-lg font-semibold">
+                          {new Date(selectedClub.active_session.due_date).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Next Discussion */}
+                  {nextDiscussion && (
+                    <div className="flex items-center bg-blue-500/20 rounded-lg px-4 py-3 border border-blue-400/30">
+                      <span className="text-2xl mr-3">💬</span>
+                      <div className="flex-1">
+                        <p className="text-white font-bold">Next Discussion</p>
+                        <p className="text-blue-200 text-lg font-semibold">{nextDiscussion.title}</p>
+                        <div className="flex items-center mt-1 space-x-3">
+                          <p className="text-blue-300 text-sm">
+                            📅 {new Date(nextDiscussion.date).toLocaleDateString()}
+                          </p>
+                          {nextDiscussion.location && (
+                            <p className="text-blue-300 text-sm">
+                              📍 {nextDiscussion.location}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {/* Book Cover Placeholder - Right side of book info */}

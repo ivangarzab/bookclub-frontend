@@ -4,8 +4,10 @@ import type { Club, Server } from './types'
 import AddClubModal from './components/modals/AddClubModal'
 import EditBookModal from './components/modals/EditBookModal'
 import NewSessionModal from './components/modals/NewSessionModal'
+import AddDiscussionModal from './components/modals/AddDiscussionModal'
 import ClubsSidebar from './components/ClubsSidebar'
 import CurrentReadingCard from './components/CurrentReadingCard'
+import DiscussionsTimeline from './components/DiscussionsTimeline'
 import MembersTable from './components/MembersTable'
 
 export default function ClubsDashboard() {
@@ -23,6 +25,9 @@ export default function ClubsDashboard() {
   
   // New Session Modal State
   const [showNewSessionModal, setShowNewSessionModal] = useState(false)
+  
+  // Add Discussion Modal State
+  const [showAddDiscussionModal, setShowAddDiscussionModal] = useState(false)
   
   // Delete Club Modal State
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
@@ -142,6 +147,10 @@ export default function ClubsDashboard() {
     setShowDeleteConfirmModal(true)
   }
 
+  const handleAddDiscussion = () => {
+    setShowAddDiscussionModal(true)
+  }
+
   const selectedServerData = servers.find(s => s.id === selectedServer)
 
   if (loading) {
@@ -229,6 +238,12 @@ export default function ClubsDashboard() {
                   onNewSession={() => setShowNewSessionModal(true)}
                 />
 
+                {/* Discussions Timeline */}
+                <DiscussionsTimeline
+                  selectedClub={selectedClub}
+                  onAddDiscussion={handleAddDiscussion}
+                />
+
                 {/* Club Info & Stats */}
                 <div className="bg-white/8 backdrop-blur-md rounded-2xl border border-blue-300/20 p-6 shadow-xl">
                   <div className="flex items-center justify-between">
@@ -243,37 +258,6 @@ export default function ClubsDashboard() {
                       <p className="text-white font-mono text-sm bg-blue-500/20 px-2 py-1 rounded">{selectedClub.server_id}</p>
                     </div>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  {/* Discussions */}
-                  {selectedClub.active_session?.discussions && selectedClub.active_session.discussions.length > 0 && (
-                    <div className="bg-white/8 backdrop-blur-md rounded-2xl border border-blue-300/20 p-6 shadow-xl">
-                      <h3 className="font-bold text-white mb-4 flex items-center">
-                        <span className="mr-3 text-xl">💬</span>
-                        Upcoming Discussions
-                      </h3>
-                      <div className="space-y-3">
-                        {selectedClub.active_session.discussions.map(discussion => (
-                          <div key={discussion.id} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/8 transition-colors">
-                            <h4 className="font-bold text-white mb-2">{discussion.title}</h4>
-                            <div className="flex items-center text-sm text-white/70 space-x-4">
-                              <span className="flex items-center">
-                                <span className="mr-1">📅</span>
-                                {new Date(discussion.date).toLocaleDateString()}
-                              </span>
-                              {discussion.location && (
-                                <span className="flex items-center">
-                                  <span className="mr-1">📍</span>
-                                  {discussion.location}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 {/* Material Design Members Table */}
@@ -330,6 +314,19 @@ export default function ClubsDashboard() {
             selectedClub={selectedClub}
             onSessionCreated={async () => {
               await fetchClubDetails(selectedClub.id) // Refresh club details to show new session
+            }}
+            onError={setError}
+          />
+        )}
+
+        {/* Add Discussion Modal */}
+        {selectedClub && (
+          <AddDiscussionModal
+            isOpen={showAddDiscussionModal}
+            onClose={() => setShowAddDiscussionModal(false)}
+            selectedClub={selectedClub}
+            onDiscussionCreated={async () => {
+              await fetchClubDetails(selectedClub.id) // Refresh club details to show new discussion
             }}
             onError={setError}
           />
