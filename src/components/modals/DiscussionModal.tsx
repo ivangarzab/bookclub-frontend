@@ -106,7 +106,7 @@ export default function DiscussionModal({
                 id: discussion.id,
                 title: formData.title.trim(),
                 date: formData.date,
-                location: formData.location.trim() ? formData.location.trim() : undefined
+                location: formData.location.trim() || null
               }
             : discussion
         )

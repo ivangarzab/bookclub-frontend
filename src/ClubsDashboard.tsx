@@ -177,15 +177,10 @@ export default function ClubsDashboard() {
 
       console.log('Deleting discussion:', discussionToDelete)
 
-      // Remove the discussion from the discussions array
-      const existingDiscussions = selectedClub.active_session.discussions || []
-      const updatedDiscussions = existingDiscussions.filter(
-        discussion => discussion.id !== discussionToDelete.id
-      )
-
       const requestBody = {
         id: selectedClub.active_session.id,
-        discussions: updatedDiscussions
+        discussions: selectedClub.active_session.discussions,
+        discussion_ids_to_delete: [discussionToDelete.id]
       }
 
       const { data, error } = await supabase.functions.invoke('session', {
@@ -195,7 +190,9 @@ export default function ClubsDashboard() {
 
       if (error) throw error
 
+      console.log('Request body:', requestBody)  // Add this line
       console.log('Discussion deleted successfully:', data)
+      console.log('Fetching fresh club details...')  // Add this line
 
       // Close modal and reset state first
       setShowDeleteDiscussionModal(false)

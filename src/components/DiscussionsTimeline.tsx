@@ -186,15 +186,15 @@ export default function DiscussionsTimeline({
                         {discussion.title}
                       </h4>
 
-                      {/* Location */}
-                      {discussion.location && (
-                        <div className={`flex items-center text-xs mb-3 ${
-                          isPast ? 'text-gray-400' : 'text-blue-300'
-                        }`}>
-                          <span className="mr-1">📍</span>
-                          <span className="truncate">{discussion.location}</span>
-                        </div>
-                      )}
+                      {/* Location - always show something */}
+                      <div className={`flex items-center text-xs mb-3 ${
+                        isPast ? 'text-gray-400' : 'text-blue-300'
+                      }`}>
+                        <span className="mr-1">📍</span>
+                        <span className="truncate">
+                          {discussion.location || 'Location TBD'}
+                        </span>
+                      </div>
 
                       {/* Timeline connector dot */}
                       <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
