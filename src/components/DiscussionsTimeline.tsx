@@ -102,7 +102,7 @@ export default function DiscussionsTimeline({
           </div>
         ) : (
           /* Scrollable Horizontal Timeline */
-          <div className="relative pb-4 pt-8">
+          <div className="relative pb-4 pt-6">
             {/* Scrollable container */}
             <div 
               ref={scrollContainerRef}
