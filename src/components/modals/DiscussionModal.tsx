@@ -1,34 +1,66 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
 import type { Club } from '../../types'
 
-interface AddDiscussionModalProps {
+interface Discussion {
+  id: string
+  title: string
+  date: string
+  location?: string
+}
+
+interface DiscussionModalProps {
   isOpen: boolean
   onClose: () => void
   selectedClub: Club
-  onDiscussionCreated: () => void
+  onDiscussionSaved: () => void
   onError: (error: string) => void
+  editingDiscussion?: Discussion // If provided, we're editing instead of adding
 }
 
-interface AddDiscussionFormData {
+interface DiscussionFormData {
   title: string
   date: string
   location: string
 }
 
-export default function AddDiscussionModal({
+export default function DiscussionModal({
   isOpen,
   onClose,
   selectedClub,
-  onDiscussionCreated,
-  onError
-}: AddDiscussionModalProps) {
+  onDiscussionSaved,
+  onError,
+  editingDiscussion
+}: DiscussionModalProps) {
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState<AddDiscussionFormData>({
+  const [formData, setFormData] = useState<DiscussionFormData>({
     title: '',
     date: '',
     location: ''
   })
+
+  const isEditing = !!editingDiscussion
+
+  // Pre-populate form when editing
+  useEffect(() => {
+    if (isOpen) {
+      if (editingDiscussion) {
+        // Edit mode - pre-populate with existing data
+        setFormData({
+          title: editingDiscussion.title,
+          date: editingDiscussion.date,
+          location: editingDiscussion.location || ''
+        })
+      } else {
+        // Add mode - reset to empty
+        setFormData({
+          title: '',
+          date: '',
+          location: ''
+        })
+      }
+    }
+  }, [isOpen, editingDiscussion])
 
   const validateDate = (dateString: string): boolean => {
     if (!dateString) return false
@@ -63,24 +95,38 @@ export default function AddDiscussionModal({
       setLoading(true)
       onError('') // Clear any existing errors
 
-      // Create new discussion object
-      const newDiscussion = {
-        id: crypto.randomUUID(),
-        title: formData.title.trim(),
-        date: formData.date,
-        location: formData.location.trim() || undefined
-      }
-
-      // Get existing discussions and add the new one
       const existingDiscussions = selectedClub.active_session.discussions || []
-      const updatedDiscussions = [...existingDiscussions, newDiscussion]
+      let updatedDiscussions
+
+      if (isEditing && editingDiscussion) {
+        // Edit mode - update existing discussion
+        updatedDiscussions = existingDiscussions.map(discussion => 
+          discussion.id === editingDiscussion.id 
+            ? {
+                id: discussion.id,
+                title: formData.title.trim(),
+                date: formData.date,
+                location: formData.location.trim() ? formData.location.trim() : undefined
+              }
+            : discussion
+        )
+      } else {
+        // Add mode - create new discussion
+        const newDiscussion = {
+          id: crypto.randomUUID(),
+          title: formData.title.trim(),
+          date: formData.date,
+          location: formData.location.trim() || undefined
+        }
+        updatedDiscussions = [...existingDiscussions, newDiscussion]
+      }
 
       const requestBody = {
         id: selectedClub.active_session.id,
         discussions: updatedDiscussions
       }
 
-      console.log('Adding discussion to session:', requestBody)
+      console.log(`${isEditing ? 'Updating' : 'Adding'} discussion:`, requestBody)
 
       const { data, error } = await supabase.functions.invoke('session', {
         method: 'PUT',
@@ -89,21 +135,21 @@ export default function AddDiscussionModal({
 
       if (error) throw error
 
-      console.log('Discussion added successfully:', data)
+      console.log(`Discussion ${isEditing ? 'updated' : 'added'} successfully:`, data)
 
       // Reset form and close modal
       setFormData({ title: '', date: '', location: '' })
       onClose()
       
-      // Notify parent component of successful creation
-      onDiscussionCreated()
+      // Notify parent component of successful save
+      onDiscussionSaved()
 
     } catch (err: unknown) {
-      console.error('Error adding discussion:', err)
+      console.error(`Error ${isEditing ? 'updating' : 'adding'} discussion:`, err)
       onError(
         err && typeof err === 'object' && 'message' in err
           ? String(err.message)
-          : 'Failed to add discussion'
+          : `Failed to ${isEditing ? 'update' : 'add'} discussion`
       )
     } finally {
       setLoading(false)
@@ -131,8 +177,12 @@ export default function AddDiscussionModal({
               <span className="text-white font-bold text-lg">💬</span>
             </div>
             <div>
-              <h2 className="text-xl font-bold text-white">Add Discussion</h2>
-              <p className="text-blue-200/70 text-sm">Schedule a new discussion event</p>
+              <h2 className="text-xl font-bold text-white">
+                {isEditing ? 'Edit Discussion' : 'Add Discussion'}
+              </h2>
+              <p className="text-blue-200/70 text-sm">
+                {isEditing ? 'Update discussion details' : 'Schedule a new discussion event'}
+              </p>
             </div>
           </div>
           <button
@@ -205,7 +255,7 @@ export default function AddDiscussionModal({
               📚 Book: <span className="text-white">{selectedClub.active_session.book.title}</span>
             </p>
             <p className="text-blue-200/60 text-xs mt-1">
-              Adding to current reading session
+              {isEditing ? 'Updating discussion for' : 'Adding to'} current reading session
             </p>
           </div>
         </div>
@@ -228,10 +278,10 @@ export default function AddDiscussionModal({
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                <span>Adding...</span>
+                <span>{isEditing ? 'Updating...' : 'Adding...'}</span>
               </>
             ) : (
-              <span>Add Discussion</span>
+              <span>{isEditing ? 'Update Discussion' : 'Add Discussion'}</span>
             )}
           </button>
         </div>

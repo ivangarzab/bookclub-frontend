@@ -102,7 +102,7 @@ export default function DiscussionsTimeline({
           </div>
         ) : (
           /* Scrollable Horizontal Timeline */
-          <div className="relative pb-4 pt-6">
+          <div className="relative pb-4 pt-8">
             {/* Scrollable container */}
             <div 
               ref={scrollContainerRef}
@@ -139,7 +139,7 @@ export default function DiscussionsTimeline({
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          console.log('Edit discussion:', discussion.title)
+                          onEditDiscussion?.(discussion)
                         }}
                         className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 p-1.5 rounded-lg border border-blue-400/30 hover:border-blue-400/50"
                         title="Edit discussion"
@@ -150,7 +150,7 @@ export default function DiscussionsTimeline({
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          console.log('Delete discussion:', discussion.title)
+                          onDeleteDiscussion?.(discussion)
                         }}
                         className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 p-1.5 rounded-lg border border-red-400/30 hover:border-red-400/50"
                         title="Delete discussion"
