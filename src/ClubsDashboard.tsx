@@ -5,6 +5,7 @@ import AddClubModal from './components/modals/AddClubModal'
 import EditBookModal from './components/modals/EditBookModal'
 import NewSessionModal from './components/modals/NewSessionModal'
 import DiscussionModal from './components/modals/DiscussionModal'
+import MemberModal from './components/modals/MemberModal'
 import ClubsSidebar from './components/ClubsSidebar'
 import CurrentReadingCard from './components/CurrentReadingCard'
 import DiscussionsTimeline from './components/DiscussionsTimeline'
@@ -39,6 +40,10 @@ export default function ClubsDashboard() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
   const [clubToDelete, setClubToDelete] = useState<{ id: string; name: string } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
+
+  // Member Modal State
+  const [showMemberModal, setShowMemberModal] = useState(false)
+  const [editingMember, setEditingMember] = useState<any>(null)
 
   // Fetch servers on component mount
   useEffect(() => {
@@ -213,6 +218,22 @@ export default function ClubsDashboard() {
     }
   }
 
+  // Member handlers
+  const handleAddMember = () => {
+    setEditingMember(null) // Clear any editing member
+    setShowMemberModal(true)
+  }
+
+  const handleEditMember = (member: any) => {
+    setEditingMember(member)
+    setShowMemberModal(true)
+  }
+
+  const handleDeleteMember = (member: any) => {
+    // TODO: Will implement delete confirmation modal next
+    console.log('Delete member:', member)
+  }
+
   const selectedServerData = servers.find(s => s.id === selectedServer)
 
   if (loading) {
@@ -325,7 +346,12 @@ export default function ClubsDashboard() {
                 />
 
                 {/* Material Design Members Table */}
-                <MembersTable selectedClub={selectedClub} />
+                <MembersTable 
+                  selectedClub={selectedClub}
+                  onAddMember={handleAddMember}
+                  onEditMember={handleEditMember}
+                  onDeleteMember={handleDeleteMember}
+                />
               </div>
             ) : (
               <div className="bg-white/8 backdrop-blur-md rounded-2xl border border-blue-300/20 p-12 text-center shadow-xl">
@@ -395,6 +421,24 @@ export default function ClubsDashboard() {
             editingDiscussion={editingDiscussion}
             onDiscussionSaved={async () => {
               await fetchClubDetails(selectedClub.id) // Refresh club details to show updated discussions
+            }}
+            onError={setError}
+          />
+        )}
+
+        {/* Member Modal */}
+        {selectedClub && (
+          <MemberModal
+            isOpen={showMemberModal}
+            onClose={() => {
+              setShowMemberModal(false)
+              setEditingMember(null)
+            }}
+            selectedClub={selectedClub}
+            selectedServerData={selectedServerData}
+            editingMember={editingMember}
+            onMemberSaved={async () => {
+              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
             }}
             onError={setError}
           />

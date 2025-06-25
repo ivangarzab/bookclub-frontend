@@ -2,9 +2,17 @@ import type { Club } from '../types'
 
 interface MembersTableProps {
   selectedClub: Club
+  onAddMember: () => void
+  onEditMember: (member: any) => void
+  onDeleteMember: (member: any) => void
 }
 
-export default function MembersTable({ selectedClub }: MembersTableProps) {
+export default function MembersTable({ 
+  selectedClub, 
+  onAddMember, 
+  onEditMember, 
+  onDeleteMember 
+}: MembersTableProps) {
   return (
     <div className="bg-white/8 backdrop-blur-md rounded-2xl border border-blue-300/20 overflow-hidden shadow-2xl">
       <div className="p-6 border-b border-blue-300/20 bg-gradient-to-r from-blue-600/10 to-orange-600/10">
@@ -20,10 +28,7 @@ export default function MembersTable({ selectedClub }: MembersTableProps) {
           {/* Add Member Button - Following DiscussionsTimeline pattern */}
           <div className="hidden md:flex">
             <button 
-              onClick={() => {
-                // TODO: Will implement in Step 2
-                console.log('Add member clicked')
-              }}
+              onClick={onAddMember}
               className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-200 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border border-blue-400/30"
             >
               + Add Member
@@ -46,28 +51,55 @@ export default function MembersTable({ selectedClub }: MembersTableProps) {
             {selectedClub.members.map(member => (
               <tr key={member.id} className="border-b border-white/5 hover:bg-white/5 transition-all duration-200 group">
                 <td className="py-4 px-6">
-                  <div className="flex items-center">
-                    <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full flex items-center justify-center mr-3 shadow-lg group-hover:scale-110 transition-transform duration-200">
-                      {/* Discord SVG */}
-                      <img 
-                        src="/ic-discord.svg" 
-                        alt="Discord" 
-                        className="w-5 h-5 text-white"
-                        onError={(e) => {
-                          // Fallback to emoji if SVG not found
-                          const target = e.currentTarget as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.parentElement?.querySelector('.fallback-emoji') as HTMLElement;
-                          if (fallback) {
-                            fallback.style.display = 'inline';
-                          }
-                        }}
-                      />
-                      <span className="fallback-emoji text-white text-sm font-bold" style={{ display: 'none' }}>
-                        🎮
-                      </span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 bg-gradient-to-r from-blue-500 to-orange-500 rounded-full flex items-center justify-center mr-3 shadow-lg group-hover:scale-110 transition-transform duration-200">
+                        {/* Discord SVG */}
+                        <img 
+                          src="/ic-discord.svg" 
+                          alt="Discord" 
+                          className="w-5 h-5 text-white"
+                          onError={(e) => {
+                            // Fallback to emoji if SVG not found
+                            const target = e.currentTarget as HTMLImageElement;
+                            target.style.display = 'none';
+                            const fallback = target.parentElement?.querySelector('.fallback-emoji') as HTMLElement;
+                            if (fallback) {
+                              fallback.style.display = 'inline';
+                            }
+                          }}
+                        />
+                        <span className="fallback-emoji text-white text-sm font-bold" style={{ display: 'none' }}>
+                          🎮
+                        </span>
+                      </div>
+                      <span className="text-white font-semibold">{member.name}</span>
                     </div>
-                    <span className="text-white font-semibold">{member.name}</span>
+
+                    {/* Edit/Delete buttons - appear on hover, hidden on mobile */}
+                    <div className="hidden md:flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditMember(member)
+                        }}
+                        className="bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 hover:text-blue-200 p-1.5 rounded-lg border border-blue-400/30 hover:border-blue-400/50"
+                        title="Edit member"
+                      >
+                        <span className="text-sm">✏️</span>
+                      </button>
+                      
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDeleteMember(member)
+                        }}
+                        className="bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 p-1.5 rounded-lg border border-red-400/30 hover:border-red-400/50"
+                        title="Delete member"
+                      >
+                        <span className="text-sm">🗑️</span>
+                      </button>
+                    </div>
                   </div>
                 </td>
                 <td className="py-4 px-6 text-center">
