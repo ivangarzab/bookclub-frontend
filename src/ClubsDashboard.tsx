@@ -7,6 +7,8 @@ import NewSessionModal from './components/modals/NewSessionModal'
 import DiscussionModal from './components/modals/DiscussionModal'
 import MemberModal from './components/modals/MemberModal'
 import DeleteMemberModal from './components/modals/DeleteMemberModal'
+import DeleteDiscussionModal from './components/modals/DeleteDiscussionModal'
+import DeleteClubModal from './components/modals/DeleteClubModal'
 import ClubsSidebar from './components/ClubsSidebar'
 import CurrentReadingCard from './components/CurrentReadingCard'
 import DiscussionsTimeline from './components/DiscussionsTimeline'
@@ -28,19 +30,17 @@ export default function ClubsDashboard() {
   // New Session Modal State
   const [showNewSessionModal, setShowNewSessionModal] = useState(false)
   
-  // Add Discussion Modal State
+  // Discussion Modal State
   const [showAddDiscussionModal, setShowAddDiscussionModal] = useState(false)
   const [editingDiscussion, setEditingDiscussion] = useState<any>(null)
   
   // Delete Discussion Modal State
   const [showDeleteDiscussionModal, setShowDeleteDiscussionModal] = useState(false)
   const [discussionToDelete, setDiscussionToDelete] = useState<any>(null)
-  const [deleteDiscussionLoading, setDeleteDiscussionLoading] = useState(false)
   
   // Delete Club Modal State
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [showDeleteClubModal, setShowDeleteClubModal] = useState(false)
   const [clubToDelete, setClubToDelete] = useState<{ id: string; name: string } | null>(null)
-  const [deleteLoading, setDeleteLoading] = useState(false)
 
   // Member Modal State
   const [showMemberModal, setShowMemberModal] = useState(false)
@@ -117,52 +117,13 @@ export default function ClubsDashboard() {
     }
   }
 
-  const handleDeleteClub = async () => {
-    if (!clubToDelete) return
-
-    try {
-      setDeleteLoading(true)
-      setError(null)
-
-      console.log('Deleting club:', clubToDelete)
-
-      const { data, error } = await supabase.functions.invoke(`club?id=${encodeURIComponent(clubToDelete.id)}&server_id=${encodeURIComponent(selectedServer)}`, {
-        method: 'DELETE'
-      })
-
-      if (error) throw error
-
-      console.log('Club deleted successfully:', data)
-
-      // Clear selected club if it was the one being deleted
-      if (selectedClub?.id === clubToDelete.id) {
-        setSelectedClub(null)
-      }
-
-      // Refresh servers to get updated club list
-      await fetchServers() // Will preserve server selection
-
-      // Close modal and reset state
-      setShowDeleteConfirmModal(false)
-      setClubToDelete(null)
-
-    } catch (err: unknown) {
-      console.error('Error deleting club:', err)
-      setError(
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to delete club'
-      )
-    } finally {
-      setDeleteLoading(false)
-    }
-  }
-
+  // Club handlers
   const confirmDeleteClub = (club: { id: string; name: string }) => {
     setClubToDelete(club)
-    setShowDeleteConfirmModal(true)
+    setShowDeleteClubModal(true)
   }
 
+  // Discussion handlers
   const handleAddDiscussion = () => {
     setEditingDiscussion(null) // Clear any editing discussion
     setShowAddDiscussionModal(true)
@@ -176,51 +137,6 @@ export default function ClubsDashboard() {
   const handleDeleteDiscussion = (discussion: any) => {
     setDiscussionToDelete(discussion)
     setShowDeleteDiscussionModal(true)
-  }
-
-  const confirmDeleteDiscussion = async () => {
-    if (!discussionToDelete || !selectedClub?.active_session) return
-
-    try {
-      setDeleteDiscussionLoading(true)
-      setError('')
-
-      console.log('Deleting discussion:', discussionToDelete)
-
-      const requestBody = {
-        id: selectedClub.active_session.id,
-        discussions: selectedClub.active_session.discussions,
-        discussion_ids_to_delete: [discussionToDelete.id]
-      }
-
-      const { data, error } = await supabase.functions.invoke('session', {
-        method: 'PUT',
-        body: requestBody
-      })
-
-      if (error) throw error
-
-      console.log('Request body:', requestBody)  // Add this line
-      console.log('Discussion deleted successfully:', data)
-      console.log('Fetching fresh club details...')  // Add this line
-
-      // Close modal and reset state first
-      setShowDeleteDiscussionModal(false)
-      setDiscussionToDelete(null)
-
-      // Then refresh club details to show updated discussions
-      await fetchClubDetails(selectedClub.id)
-
-    } catch (err: unknown) {
-      console.error('Error deleting discussion:', err)
-      setError(
-        err && typeof err === 'object' && 'message' in err
-          ? String(err.message)
-          : 'Failed to delete discussion'
-      )
-    } finally {
-      setDeleteDiscussionLoading(false)
-    }
   }
 
   // Member handlers
@@ -376,219 +292,135 @@ export default function ClubsDashboard() {
         </div>
       </div>
 
-        <AddClubModal
-          isOpen={showAddClubModal}
-          onClose={() => setShowAddClubModal(false)}
-          selectedServer={selectedServer}
-          selectedServerData={selectedServerData}
-          onClubCreated={async (clubId) => {
-            await fetchServers() // Will preserve selection by default
-            await fetchClubDetails(clubId) // Auto-select the new club
+      {/* All Modals - Clean and Organized! */}
+      
+      {/* Add Club Modal */}
+      <AddClubModal
+        isOpen={showAddClubModal}
+        onClose={() => setShowAddClubModal(false)}
+        selectedServer={selectedServer}
+        selectedServerData={selectedServerData}
+        onClubCreated={async (clubId) => {
+          await fetchServers() // Will preserve selection by default
+          await fetchClubDetails(clubId) // Auto-select the new club
+        }}
+        onError={setError}
+      />
+
+      {/* Edit Book Modal */}
+      {selectedClub && (
+        <EditBookModal
+          isOpen={showEditBookModal}
+          onClose={() => setShowEditBookModal(false)}
+          selectedClub={selectedClub}
+          onBookUpdated={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show updated book
           }}
           onError={setError}
         />
+      )}
 
-        {/* Edit Book Modal */}
-        {selectedClub && (
-          <EditBookModal
-            isOpen={showEditBookModal}
-            onClose={() => setShowEditBookModal(false)}
-            selectedClub={selectedClub}
-            onBookUpdated={async () => {
-              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated book
-            }}
-            onError={setError}
-          />
-        )}
+      {/* New Session Modal */}
+      {selectedClub && (
+        <NewSessionModal
+          isOpen={showNewSessionModal}
+          onClose={() => setShowNewSessionModal(false)}
+          selectedClub={selectedClub}
+          onSessionCreated={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show new session
+          }}
+          onError={setError}
+        />
+      )}
 
-        {/* New Session Modal */}
-        {selectedClub && (
-          <NewSessionModal
-            isOpen={showNewSessionModal}
-            onClose={() => setShowNewSessionModal(false)}
-            selectedClub={selectedClub}
-            onSessionCreated={async () => {
-              await fetchClubDetails(selectedClub.id) // Refresh club details to show new session
-            }}
-            onError={setError}
-          />
-        )}
+      {/* Add/Edit Discussion Modal */}
+      {selectedClub && (
+        <DiscussionModal
+          isOpen={showAddDiscussionModal}
+          onClose={() => {
+            setShowAddDiscussionModal(false)
+            setEditingDiscussion(null)
+          }}
+          selectedClub={selectedClub}
+          editingDiscussion={editingDiscussion}
+          onDiscussionSaved={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show updated discussions
+          }}
+          onError={setError}
+        />
+      )}
 
-        {/* Add/Edit Discussion Modal */}
-        {selectedClub && (
-          <DiscussionModal
-            isOpen={showAddDiscussionModal}
-            onClose={() => {
-              setShowAddDiscussionModal(false)
-              setEditingDiscussion(null)
-            }}
-            selectedClub={selectedClub}
-            editingDiscussion={editingDiscussion}
-            onDiscussionSaved={async () => {
-              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated discussions
-            }}
-            onError={setError}
-          />
-        )}
+      {/* Add/Edit Member Modal */}
+      {selectedClub && (
+        <MemberModal
+          isOpen={showMemberModal}
+          onClose={() => {
+            setShowMemberModal(false)
+            setEditingMember(null)
+          }}
+          selectedClub={selectedClub}
+          selectedServerData={selectedServerData}
+          editingMember={editingMember}
+          onMemberSaved={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
+          }}
+          onError={setError}
+        />
+      )}
 
-        {/* Member Modal */}
-        {selectedClub && (
-          <MemberModal
-            isOpen={showMemberModal}
-            onClose={() => {
-              setShowMemberModal(false)
-              setEditingMember(null)
-            }}
-            selectedClub={selectedClub}
-            selectedServerData={selectedServerData}
-            editingMember={editingMember}
-            onMemberSaved={async () => {
-              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
-            }}
-            onError={setError}
-          />
-        )}
+      {/* Delete Member Modal */}
+      {selectedClub && (
+        <DeleteMemberModal
+          isOpen={showDeleteMemberModal}
+          onClose={() => {
+            setShowDeleteMemberModal(false)
+            setMemberToDelete(null)
+          }}
+          memberToDelete={memberToDelete}
+          onMemberDeleted={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
+          }}
+          onError={setError}
+        />
+      )}
 
-        {/* Delete Member Modal */}
-        {selectedClub && (
-          <DeleteMemberModal
-            isOpen={showDeleteMemberModal}
-            onClose={() => {
-              setShowDeleteMemberModal(false)
-              setMemberToDelete(null)
-            }}
-            memberToDelete={memberToDelete}
-            onMemberDeleted={async () => {
-              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
-            }}
-            onError={setError}
-          />
-        )}
+      {/* Delete Discussion Modal */}
+      {selectedClub && (
+        <DeleteDiscussionModal
+          isOpen={showDeleteDiscussionModal}
+          onClose={() => {
+            setShowDeleteDiscussionModal(false)
+            setDiscussionToDelete(null)
+          }}
+          discussionToDelete={discussionToDelete}
+          selectedClub={selectedClub}
+          onDiscussionDeleted={async () => {
+            await fetchClubDetails(selectedClub.id) // Refresh club details to show updated discussions
+          }}
+          onError={setError}
+        />
+      )}
 
-        {/* Delete Discussion Confirmation Modal */}
-        {showDeleteDiscussionModal && discussionToDelete && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-slate-800 via-red-900/20 to-slate-800 rounded-2xl border border-red-300/30 p-6 w-full max-w-md shadow-2xl">
-              {/* Modal Header */}
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="h-12 w-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">⚠️</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Delete Discussion</h2>
-                  <p className="text-red-200/70 text-sm">This action cannot be undone</p>
-                </div>
-              </div>
-
-              {/* Warning Content */}
-              <div className="mb-6">
-                <p className="text-white mb-3">
-                  Are you sure you want to delete <span className="font-bold text-orange-300">"{discussionToDelete.title}"</span>?
-                </p>
-                <div className="bg-red-500/10 border border-red-400/20 rounded-xl p-4">
-                  <p className="text-red-200 text-sm font-medium mb-2">⚠️ This will permanently delete:</p>
-                  <ul className="text-red-200/80 text-sm space-y-1 ml-4">
-                    <li>• The discussion event</li>
-                    <li>• All associated details</li>
-                    <li>• Cannot be recovered</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    setShowDeleteDiscussionModal(false)
-                    setDiscussionToDelete(null)
-                  }}
-                  className="text-white/60 hover:text-white transition-colors font-medium"
-                  disabled={deleteDiscussionLoading}
-                >
-                  Cancel
-                </button>
-                
-                <button
-                  onClick={confirmDeleteDiscussion}
-                  disabled={deleteDiscussionLoading}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-lg disabled:hover:scale-100 flex items-center space-x-2"
-                >
-                  {deleteDiscussionLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    <span>Delete Discussion</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Delete Club Confirmation Modal */}
-        {showDeleteConfirmModal && clubToDelete && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gradient-to-br from-slate-800 via-red-900/20 to-slate-800 rounded-2xl border border-red-300/30 p-6 w-full max-w-md shadow-2xl">
-              {/* Modal Header */}
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="h-12 w-12 bg-gradient-to-r from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-xl">⚠️</span>
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-white">Delete Club</h2>
-                  <p className="text-red-200/70 text-sm">This action cannot be undone</p>
-                </div>
-              </div>
-
-              {/* Warning Content */}
-              <div className="mb-6">
-                <p className="text-white mb-3">
-                  Are you sure you want to delete <span className="font-bold text-orange-300">"{clubToDelete.name}"</span>?
-                </p>
-                <div className="bg-red-500/10 border border-red-400/20 rounded-xl p-4">
-                  <p className="text-red-200 text-sm font-medium mb-2">⚠️ This will permanently delete:</p>
-                  <ul className="text-red-200/80 text-sm space-y-1 ml-4">
-                    <li>• All reading sessions and books</li>
-                    <li>• All discussions and events</li>
-                    <li>• All member associations</li>
-                    <li>• The entire club history</li>
-                  </ul>
-                </div>
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => {
-                    setShowDeleteConfirmModal(false)
-                    setClubToDelete(null)
-                  }}
-                  className="text-white/60 hover:text-white transition-colors font-medium"
-                  disabled={deleteLoading}
-                >
-                  Cancel
-                </button>
-                
-                <button
-                  onClick={handleDeleteClub}
-                  disabled={deleteLoading}
-                  className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-lg disabled:hover:scale-100 flex items-center space-x-2"
-                >
-                  {deleteLoading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                      <span>Deleting...</span>
-                    </>
-                  ) : (
-                    <span>Delete Club</span>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Delete Club Modal */}
+      <DeleteClubModal
+        isOpen={showDeleteClubModal}
+        onClose={() => {
+          setShowDeleteClubModal(false)
+          setClubToDelete(null)
+        }}
+        clubToDelete={clubToDelete}
+        selectedServer={selectedServer}
+        selectedClub={selectedClub}
+        onClubDeleted={async () => {
+          // Clear selected club if it was the one being deleted
+          if (selectedClub?.id === clubToDelete?.id) {
+            setSelectedClub(null)
+          }
+          // Refresh servers to get updated club list
+          await fetchServers() // Will preserve server selection
+        }}
+        onError={setError}
+      />
     </div>
   )
 }
