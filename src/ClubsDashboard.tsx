@@ -6,6 +6,7 @@ import EditBookModal from './components/modals/EditBookModal'
 import NewSessionModal from './components/modals/NewSessionModal'
 import DiscussionModal from './components/modals/DiscussionModal'
 import MemberModal from './components/modals/MemberModal'
+import DeleteMemberModal from './components/modals/DeleteMemberModal'
 import ClubsSidebar from './components/ClubsSidebar'
 import CurrentReadingCard from './components/CurrentReadingCard'
 import DiscussionsTimeline from './components/DiscussionsTimeline'
@@ -44,6 +45,10 @@ export default function ClubsDashboard() {
   // Member Modal State
   const [showMemberModal, setShowMemberModal] = useState(false)
   const [editingMember, setEditingMember] = useState<any>(null)
+
+  // Delete Member Modal State
+  const [showDeleteMemberModal, setShowDeleteMemberModal] = useState(false)
+  const [memberToDelete, setMemberToDelete] = useState<any>(null)
 
   // Fetch servers on component mount
   useEffect(() => {
@@ -230,8 +235,8 @@ export default function ClubsDashboard() {
   }
 
   const handleDeleteMember = (member: any) => {
-    // TODO: Will implement delete confirmation modal next
-    console.log('Delete member:', member)
+    setMemberToDelete(member)
+    setShowDeleteMemberModal(true)
   }
 
   const selectedServerData = servers.find(s => s.id === selectedServer)
@@ -438,6 +443,22 @@ export default function ClubsDashboard() {
             selectedServerData={selectedServerData}
             editingMember={editingMember}
             onMemberSaved={async () => {
+              await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
+            }}
+            onError={setError}
+          />
+        )}
+
+        {/* Delete Member Modal */}
+        {selectedClub && (
+          <DeleteMemberModal
+            isOpen={showDeleteMemberModal}
+            onClose={() => {
+              setShowDeleteMemberModal(false)
+              setMemberToDelete(null)
+            }}
+            memberToDelete={memberToDelete}
+            onMemberDeleted={async () => {
               await fetchClubDetails(selectedClub.id) // Refresh club details to show updated members
             }}
             onError={setError}
