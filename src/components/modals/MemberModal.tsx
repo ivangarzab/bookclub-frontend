@@ -1,13 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../../supabase'
-import type { Club, Server } from '../../types'
-
-interface Member {
-  id: number
-  name: string
-  points: number
-  books_read: number
-}
+import type { Club, Server, Member } from '../../types'
 
 interface MemberModalProps {
   isOpen: boolean
@@ -23,6 +16,7 @@ interface MemberFormData {
   name: string
   points: string
   books_read: string
+  on_shame_list: boolean
 }
 
 export default function MemberModal({
@@ -38,7 +32,8 @@ export default function MemberModal({
   const [formData, setFormData] = useState<MemberFormData>({
     name: '',
     points: '0',
-    books_read: '0'
+    books_read: '0',
+    on_shame_list: false
   })
 
   const isEditing = !!editingMember
@@ -48,17 +43,20 @@ export default function MemberModal({
     if (isOpen) {
       if (editingMember) {
         // Edit mode - pre-populate with existing data
+        const isOnShameList = selectedClub.shame_list.includes(editingMember.id)
         setFormData({
           name: editingMember.name,
           points: String(editingMember.points),
-          books_read: String(editingMember.books_read)
+          books_read: String(editingMember.books_read),
+          on_shame_list: isOnShameList
         })
       } else {
         // Add mode - reset to defaults
         setFormData({
           name: '',
           points: '0',
-          books_read: '0'
+          books_read: '0',
+          on_shame_list: false
         })
       }
     }
@@ -99,20 +97,12 @@ export default function MemberModal({
         books_read: parseInt(formData.books_read)
       }
 
-      console.log('=== MEMBER MODAL DEBUG ===')
-      console.log('Is editing:', isEditing)
-      console.log('Editing member:', JSON.stringify(editingMember, null, 2))
-      console.log('Form data:', JSON.stringify(formData, null, 2))
-      console.log('Member data:', JSON.stringify(memberData, null, 2))
-
       if (isEditing && editingMember) {
-        // Edit mode - update existing member (don't include clubs array unless we want to change club associations)
+        // Edit mode - update existing member
         const requestBody = {
           id: editingMember.id,
           ...memberData
         }
-
-        console.log('Edit request body:', JSON.stringify(requestBody, null, 2))
 
         const { data, error } = await supabase.functions.invoke('member', {
           method: 'PUT',
@@ -121,15 +111,39 @@ export default function MemberModal({
 
         if (error) throw error
 
-        console.log('Member updated successfully:', data)
+        // Handle shame list update separately for edit mode
+        if (formData.on_shame_list !== selectedClub.shame_list.includes(editingMember.id)) {
+          let newShameList = [...selectedClub.shame_list]
+          if (formData.on_shame_list) {
+            // Add to shame list
+            if (!newShameList.includes(editingMember.id)) {
+              newShameList.push(editingMember.id)
+            }
+          } else {
+            // Remove from shame list
+            newShameList = newShameList.filter(id => id !== editingMember.id)
+          }
+
+          const { error: shameError } = await supabase.functions.invoke('club', {
+            method: 'PUT',
+            body: {
+              id: selectedClub.id,
+              server_id: selectedServerData?.id,
+              shame_list: newShameList
+            }
+          })
+
+          if (shameError) {
+            console.error('Error updating shame list:', shameError)
+            onError('Member updated but failed to update shame list status')
+          }
+        }
       } else {
         // Add mode - create new member and add to club
         const requestBody = {
           ...memberData,
           clubs: [selectedClub.id] // Add them to this specific club
         }
-
-        console.log('Add request body:', JSON.stringify(requestBody, null, 2))
 
         const { data, error } = await supabase.functions.invoke('member', {
           method: 'POST',
@@ -138,11 +152,28 @@ export default function MemberModal({
 
         if (error) throw error
 
-        console.log('Member created successfully:', data)
+        // Handle shame list for new member
+        if (formData.on_shame_list && data.member) {
+          const newShameList = [...selectedClub.shame_list, data.member.id]
+
+          const { error: shameError } = await supabase.functions.invoke('club', {
+            method: 'PUT',
+            body: {
+              id: selectedClub.id,
+              server_id: selectedServerData?.id,
+              shame_list: newShameList
+            }
+          })
+
+          if (shameError) {
+            console.error('Error adding to shame list:', shameError)
+            onError('Member created but failed to add to shame list')
+          }
+        }
       }
 
       // Reset form and close modal
-      setFormData({ name: '', points: '0', books_read: '0' })
+      setFormData({ name: '', points: '0', books_read: '0', on_shame_list: false })
       onClose()
       
       // Notify parent component of successful save
@@ -161,7 +192,7 @@ export default function MemberModal({
   }
 
   const handleClose = () => {
-    setFormData({ name: '', points: '0', books_read: '0' })
+    setFormData({ name: '', points: '0', books_read: '0', on_shame_list: false })
     onError('') // Clear errors when closing
     onClose()
   }
@@ -249,6 +280,61 @@ export default function MemberModal({
             <p className="text-blue-200/60 text-xs mt-1">
               📚 Number of books completed
             </p>
+          </div>
+
+          {/* Shame List Toggle - Material 3 Style */}
+          <div>
+            <label className="block text-white font-medium mb-3">
+              Shame List Status
+            </label>
+            <div className="flex items-center justify-between bg-white/10 backdrop-blur-md border border-blue-300/30 rounded-xl p-4">
+              <div className="flex items-center space-x-3">
+                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
+                  formData.on_shame_list 
+                    ? 'bg-red-500 text-white' 
+                    : 'bg-green-500 text-white'
+                }`}>
+                  <span className="text-sm">
+                    {formData.on_shame_list ? '😰' : '✨'}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-white font-medium">
+                    {formData.on_shame_list ? 'On Shame List' : 'Good Standing'}
+                  </p>
+                  <p className="text-blue-200/60 text-xs">
+                    {formData.on_shame_list 
+                      ? 'Member has fallen behind on reading' 
+                      : 'Member is up to date with reading'
+                    }
+                  </p>
+                </div>
+              </div>
+              
+              {/* Material 3 Switch */}
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.on_shame_list}
+                  onChange={(e) => setFormData(prev => ({ ...prev, on_shame_list: e.target.checked }))}
+                  className="sr-only peer"
+                  disabled={loading}
+                />
+                <div className={`relative w-14 h-8 rounded-full transition-all duration-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-400/20 ${
+                  formData.on_shame_list 
+                    ? 'bg-red-500' 
+                    : 'bg-white/20'
+                } peer-checked:bg-red-500`}>
+                  <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-lg transition-all duration-300 flex items-center justify-center ${
+                    formData.on_shame_list ? 'translate-x-6' : 'translate-x-0'
+                  }`}>
+                    <span className="text-xs">
+                      {formData.on_shame_list ? '😰' : '✨'}
+                    </span>
+                  </div>
+                </div>
+              </label>
+            </div>
           </div>
 
           {/* Club Context */}
